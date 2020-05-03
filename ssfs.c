@@ -9,7 +9,27 @@
 #include <sys/time.h>
 
 char *dir_path = "/home/hana/Documents";
+char *log_path = "/home/hana/fs.log";
 char caesar[100] = "9(ku@AW1[Lmvgax6q`5Y2Ry?+sF!^HKQiBXCUSe&0M.b%rI'7d)o4~VfZ*{#:}ETt$3J-zpc]lnh8,GwP_ND|jO9(ku@AW1[L";
+
+void writeLog(char *level, char *cmd_desc)
+{
+  FILE * fp;
+  fp = fopen (log_path, "a+");
+
+  time_t rawtime = time(NULL);
+  
+  struct tm *info = localtime(&rawtime);
+  
+  char time[100];
+  strftime(time, 100, "%y%m%d-%H:%M:%S", info);
+
+  char log[100];
+  sprintf(log, "%s::%s::%s\n", level, time, cmd_desc);
+  fputs(log, fp);
+
+  fclose(fp);
+}
 
 void encryptV1(char *src) 
 {
@@ -250,6 +270,7 @@ static int xmp_mknod(const char *path, mode_t mode, dev_t rdev)
 
   char desc[100];
   sprintf(desc, "CREATE::%s", fpath);
+  writeLog("INFO", desc);
 
   return 0;
 }
@@ -282,6 +303,7 @@ static int xmp_mkdir(const char *path, mode_t mode)
 
   char desc[100];
   sprintf(desc, "MKDIR::%s", fpath);
+  writeLog("INFO", desc);
 
   return 0;
 }
@@ -314,6 +336,7 @@ static int xmp_unlink(const char *path)
 
   char desc[100];
   sprintf(desc, "REMOVE::%s", fpath);
+  writeLog("WARNING", desc);
   
   return 0;
 }
@@ -345,6 +368,7 @@ static int xmp_rmdir(const char *path)
 
   char desc[100];
   sprintf(desc, "RMDIR::%s", fpath);
+  writeLog("WARNING", desc);
 
   return 0;
 }
@@ -393,6 +417,7 @@ static int xmp_rename(const char *from, const char *to)
 
   char desc[100];
   sprintf(desc, "RENAME::%s::%s", ffrom, fto);
+  writeLog("INFO", desc);
 
   return 0;
 }
@@ -446,7 +471,28 @@ static int xmp_write(const char *path, const char *buf, size_t size, off_t offse
 
     sprintf(fpath, "%s%s", dir_path, temp);
   }
+
+  int fd;
+  int res;
+
+  (void) fi;
+  fd = open(fpath, O_WRONLY);
+  if (fd == -1)
+    return -errno;
+
+  res = pwrite(fd, buf, size, offset);
+  if (res == -1)
+    res = -errno;
+
+  close(fd);
+
+  char desc[100];
+  sprintf(desc, "WRITE::%s", fpath);
+  writeLog("INFO", desc);
+
+  return res;
 }
+
 static struct fuse_operations xmp_oper = {
   .getattr  = xmp_getattr,
   .readdir  = xmp_readdir,
