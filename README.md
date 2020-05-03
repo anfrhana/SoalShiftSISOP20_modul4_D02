@@ -17,6 +17,90 @@ Note : Dalam penamaan file ‘/’ diabaikan, dan ekstensi tidak perlu di encryp
 
 Metode enkripsi pada suatu direktori juga berlaku kedalam direktori lainnya yang ada didalamnya.
 
+dibuat fungsi untuk enkripsi dan dekripsi
+```
+void encryptV1(char *src) 
+{
+  int len = strlen(src);
+  int start = 0;
+
+  for (int i = strlen(src); i >= 0; i--) 
+  {
+    if(src[i] == '/')
+      break;
+
+    if(src[i] == '.')
+    {
+      len = i - 1;
+      break;
+    }
+  }
+
+  for (int i = 1; i < len; i++)
+    if (src[i] == '/')
+      start = i;
+
+  for (int i = start; i <= len; i++) 
+  {
+    if(src[i] == '/')
+      continue;
+
+    int caesar_index = 0;
+    while(1)
+    {
+      if(src[i] == caesar[caesar_index])
+      {
+        src[i] = caesar[caesar_index + 10];
+        break;
+      }
+      caesar_index++;
+    }
+  }
+}
+
+void decryptV1(char *src) 
+{
+  int len = strlen(src); 
+  int start = 0;
+    
+  for (int i = 1; i < len; i++)
+  {
+    if(src[i] == '/' || src[i + 1] == '\0') 
+    {
+      start = i + 1;
+      break;
+    }
+  }
+
+  for (int i = strlen(src); i >= 0; i--)
+  {
+    if (src[i] == '.') 
+    {
+      len = i - 1;
+      break;
+    }
+  }
+
+  for (int i = start; i <= len; i++) 
+  {
+    if(src[i] == '/')
+      continue;
+
+    int caesar_index = strlen(caesar) - 1;
+    while(1)
+    {
+      if(src[i] == caesar[caesar_index])
+      {
+        src[i] = caesar[caesar_index - 10];
+        break;
+      }
+      caesar_index--;
+    }
+  }
+}
+
+```
+
 Enkripsi versi 2:
 
 Jika sebuah direktori dibuat dengan awalan “encv2_”, maka direktori tersebut akan menjadi direktori terenkripsi menggunakan 
@@ -78,3 +162,25 @@ Contoh format logging nantinya seperti:
 INFO::200419-18:29:28::MKDIR::/iz1
 INFO::200419-18:29:33::CREAT::/iz1/yena.jpg
 INFO::200419-18:29:33::RENAME::/iz1/yena.jpg::/iz1/yena.jpeg
+
+dibuat fungsi untuk melakukan penulisan log sesuai dengan format
+```
+void writeLog(char *level, char *cmd_desc)
+{
+  FILE * fp;
+  fp = fopen (log_path, "a+");
+
+  time_t rawtime = time(NULL);
+  
+  struct tm *info = localtime(&rawtime);
+  
+  char time[100];
+  strftime(time, 100, "%y%m%d-%H:%M:%S", info);
+
+  char log[100];
+  sprintf(log, "%s::%s::%s\n", level, time, cmd_desc);
+  fputs(log, fp);
+
+  fclose(fp);
+}
+```
